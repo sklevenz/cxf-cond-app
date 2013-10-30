@@ -1,0 +1,7 @@
+.pmd
+target
+bin
+*.bak
+classes
+.DS_Store
+
