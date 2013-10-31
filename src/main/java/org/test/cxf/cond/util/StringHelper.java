@@ -1,4 +1,4 @@
-package org.test.cxf.cond;
+package org.test.cxf.cond.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;

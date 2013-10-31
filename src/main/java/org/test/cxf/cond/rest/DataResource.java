@@ -5,7 +5,7 @@ import java.util.Random;
 
 import javax.ws.rs.core.EntityTag;
 
-import org.test.cxf.cond.StringHelper;
+import org.test.cxf.cond.util.StringHelper;
 
 public class DataResource {
 

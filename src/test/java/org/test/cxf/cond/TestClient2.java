@@ -2,14 +2,12 @@ package org.test.cxf.cond;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
 
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -18,8 +16,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.test.cxf.cond.util.StringHelper;
 
+@Ignore
 public class TestClient2 {
 
   private HttpClient client;

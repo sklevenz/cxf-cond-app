@@ -19,7 +19,7 @@ public class TestServer {
     TestServer ts = new TestServer();
     ts.start();
 
-    URL url = new URL(endpoint + "/etag");
+    URL url = new URL(endpoint + "/fetch");
     Object content = url.getContent();
     assertNotNull(content);
 
