@@ -10,8 +10,8 @@ public class RestApplication extends Application {
   @Override
   public Set<Class<?>> getClasses() {
     Set<Class<?>> classes = new HashSet<Class<?>>();
-     classes.add(RestResource.class);
-     return classes;
+    classes.add(RestResource.class);
+    return classes;
   }
 
 }

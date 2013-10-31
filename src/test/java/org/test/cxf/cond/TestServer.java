@@ -57,7 +57,7 @@ public class TestServer {
     final CXFNonSpringJaxrsServlet odataServlet = new CXFNonSpringJaxrsServlet();
     final ServletHolder odataServletHolder = new ServletHolder(odataServlet);
     odataServletHolder.setInitParameter("javax.ws.rs.Application",
-        "com.sap.cxf.cond.rest.RestApplication");
+        "org.test.cxf.cond.rest.RestApplication");
 
     final ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
     contextHandler.addServlet(odataServletHolder, endpoint.getPath() + "/*");

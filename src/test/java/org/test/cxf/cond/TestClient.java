@@ -1,24 +1,23 @@
 package org.test.cxf.cond;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import java.io.IOException;
 import java.net.URI;
-import java.util.Date;
 
 import javax.ws.rs.core.HttpHeaders;
 
+import org.apache.http.HttpMessage;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.*;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.test.cxf.cond.rest.RestResource;
 
 public class TestClient {
 
@@ -44,70 +43,68 @@ public class TestClient {
   public static void afterClass() {}
 
   @Test
-  public void printDates() throws Exception {
-    Date d = new Date(System.currentTimeMillis());
-    System.out.println("TestClient:Current Client Date:          " + StringHelper.dateToGmdString(d));
+  public void fetch() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.GET, "/fetch", null, null);
 
-    URI uri = URI.create(server.getEndpoint() + "/serverDate");
-    HttpGet get = new HttpGet(uri);
-    HttpResponse response = client.execute(get);
-    System.out.println("TestClient:Current Server Date:          " + StringHelper.httpEntityToString(response.getEntity()));
-    System.out.println("TestClient:Last Modified  Date:          " + response.getFirstHeader(HttpHeaders.LAST_MODIFIED).getValue());
-  }  
-  
-  @Test
-  public void notModifiedWithLastModified() throws Exception {
-    URI uri = URI.create(server.getEndpoint() + "/lmd");
+    assertNotNull(response);
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertNotNull(response.getFirstHeader(HttpHeaders.LAST_MODIFIED));
+    assertNotNull(response.getFirstHeader(HttpHeaders.ETAG));
+    String lastModifiedDateHeader = response.getFirstHeader(HttpHeaders.LAST_MODIFIED).getValue();
+    String eTagHeader = response.getFirstHeader(HttpHeaders.ETAG).getValue();
 
-    HttpGet get1 = new HttpGet(uri);
-    HttpResponse response1 = client.execute(get1);
-    String lastModified = response1.getFirstHeader(HttpHeaders.LAST_MODIFIED).getValue();
-    get1.reset();
-
-    HttpGet get2 = new HttpGet(uri);
-    get2.setHeader(HttpHeaders.IF_MODIFIED_SINCE, lastModified);
-    HttpResponse response2 = client.execute(get2);
-
-    assertEquals(304, response2.getStatusLine().getStatusCode());
-    get2.reset();
+    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals(RestResource.LAST_MODIFIED_DATE, lastModifiedDateHeader);
+    assertEquals("\"" + RestResource.ETAG + "\"", eTagHeader);
   }
 
   @Test
-  public void notModifiedWithETag() throws Exception {
-    URI uri = URI.create(server.getEndpoint() + "/etag");
+  public void put() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.PUT, "/put", null, null);
 
-    HttpGet get1 = new HttpGet(uri);
-    HttpResponse response1 = client.execute(get1);
-    String etag1 = response1.getFirstHeader(HttpHeaders.ETAG).getValue();
-    get1.reset();
-
-    HttpGet get2 = new HttpGet(uri);
-    get2.setHeader(HttpHeaders.IF_NONE_MATCH, etag1);
-    HttpResponse response2 = client.execute(get2);
-
-    assertEquals(304, response2.getStatusLine().getStatusCode());
-    get2.reset();
+    assertNotNull(response);
+    assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
-  @Test
-  public void modifiedWithETag() throws Exception {
-    URI uri = URI.create(server.getEndpoint() + "/etag");
+  private HttpResponse execute(HttpMethodEnum method, String path, String eTagHeaderValue, String lastModifiedDateHeaderValue) {
+    try {
+      URI uri = URI.create(server.getEndpoint() + path);
+      HttpResponse response;
+      HttpRequestBase hrb;
+      switch (method) {
+      case GET:
+        hrb = new HttpGet(uri);
+        break;
+      case PUT:
+        hrb = new HttpPut(uri);
+        break;
+      case PATCH:
+        hrb = new HttpPatch(uri);
+        break;
+      //      case Merge:
+      //        hrb = new HttpMerge(uri);
+      //        break;
+      case DELETE:
+        hrb = new HttpDelete(uri);
+        break;
+      default:
+        throw new RuntimeException("Method unsupported: " + method);
+      }
 
-    HttpGet get1 = new HttpGet(uri);
-    HttpResponse response1 = client.execute(get1);
+      if (null != eTagHeaderValue) {
+        hrb.setHeader(HttpHeaders.ETAG, eTagHeaderValue);
+      }
 
-    String etag1 = response1.getFirstHeader(HttpHeaders.ETAG).getValue();
-    get1.reset();
+      if (null != lastModifiedDateHeaderValue) {
+        hrb.setHeader(HttpHeaders.LAST_MODIFIED, lastModifiedDateHeaderValue);
+      }
 
-    HttpPost post = new HttpPost(uri);
-    client.execute(post);
-    post.reset();
-
-    HttpGet get2 = new HttpGet(uri);
-    get2.setHeader(HttpHeaders.IF_NONE_MATCH, etag1);
-    HttpResponse response2 = client.execute(get2);
-    get2.reset();
-
-    assertEquals(200, response2.getStatusLine().getStatusCode());
+      response = client.execute(hrb);
+      hrb.reset();
+      return response;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
+
 }

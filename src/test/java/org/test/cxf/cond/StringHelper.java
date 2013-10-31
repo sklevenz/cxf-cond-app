@@ -17,7 +17,6 @@ import org.apache.http.HttpEntity;
  */
 public class StringHelper {
 
-  
   public static String dateToGmdString(Date date) {
     String DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss z";
     final SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT, Locale.ENGLISH);
@@ -25,7 +24,6 @@ public class StringHelper {
     String dateTimeString = sdf.format(date);
     return dateTimeString;
   }
-
 
   public static String inputStreamToString(final InputStream in, final boolean preserveLineBreaks) throws IOException {
     final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in, Charset.forName("UTF-8")));
