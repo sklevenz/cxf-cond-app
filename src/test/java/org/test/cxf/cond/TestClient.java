@@ -47,8 +47,8 @@ public class TestClient {
   public static void afterClass() {}
 
   @Test
-  public void fetch() throws Exception {
-    HttpResponse response = execute(HttpMethodEnum.GET, "/fetch", null, null);
+  public void fetch200() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.GET, "/get", null, null);
 
     assertNotNull(response);
     assertEquals(200, response.getStatusLine().getStatusCode());
@@ -63,11 +63,24 @@ public class TestClient {
   }
 
   @Test
-  public void put() throws Exception {
+  public void put428() throws Exception {
     HttpResponse response = execute(HttpMethodEnum.PUT, "/put", null, null);
-
     assertNotNull(response);
-    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals(428, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void patch428() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.PATCH, "/patch", null, null);
+    assertNotNull(response);
+    assertEquals(428, response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void delete428() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.DELETE, "/delete", null, null);
+    assertNotNull(response);
+    assertEquals(428, response.getStatusLine().getStatusCode());
   }
 
   private HttpResponse execute(HttpMethodEnum method, String path, String eTagHeaderValue, String lastModifiedDateHeaderValue) {

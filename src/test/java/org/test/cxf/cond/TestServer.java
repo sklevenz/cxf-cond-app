@@ -19,7 +19,7 @@ public class TestServer {
     TestServer ts = new TestServer();
     ts.start();
 
-    URL url = new URL(endpoint + "/fetch");
+    URL url = new URL(endpoint + "/get");
     Object content = url.getContent();
     assertNotNull(content);
 

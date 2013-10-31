@@ -6,15 +6,19 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+
+import org.apache.olingo.odata2.core.rest.PATCH;
 
 @Path("/")
 public class RestResource {
@@ -37,19 +41,21 @@ public class RestResource {
   }
 
   @GET
-  @Path("fetch")
+  @Path("get")
+  @Produces("text/html")
   public Response fetch() {
-    return Response.ok("ok", "text/html").lastModified(lastModifiedDate).tag(eTag).build();
+    return Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
   }
 
-  @PUT
-  @Path("put")
-  public Response put(@Context Request request) {
-    ResponseBuilder builder = request.evaluatePreconditions();
+  @DELETE
+  @Path("delete")
+  @Produces("text/html")
+  public Response delete(@Context Request request) {
+    ResponseBuilder builder = evaluatePreconditions(request);
     Response response;
 
     if (builder == null) {
-      response = Response.ok("ok", "text/html").lastModified(lastModifiedDate).tag(eTag).build();
+      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
     } else {
       response = builder.build();
     }
@@ -57,93 +63,53 @@ public class RestResource {
     return response;
   }
 
-  //  @GET
-  //  @Path("serverDate")
-  //  @Produces("text/html")
-  //  public Response getServerDate() {
-  //    Date date = data.getCurrentServerDate();
-  //    String dateString = data.getCurrentServerDateToGmdString();
-  //    return Response.ok(dateString).lastModified(date).build();
-  //  }
-  //
-  //  @GET
-  //  @Path("etag")
-  //  public Response getETag(@Context Request request) {
-  //    ResponseBuilder rb = request.evaluatePreconditions(data.getETag());
-  //
-  //    Response response;
-  //    CacheControl cc = new CacheControl();
-  //    cc.setMaxAge(30);
-  //
-  //    if (rb != null) {
-  //      response = rb.cacheControl(cc).build();
-  //    } else {
-  //      response = Response.ok(data.toString(), "text/html")
-  //          .tag(data.getETag())
-  //          .cacheControl(cc)
-  //          .lastModified(data.getLastModifiedDate())
-  //          .build();
-  //    }
-  //    return response;
-  //  }
-  //
-  //  @POST
-  //  @Path("etag")
-  //  public Response postETag(@Context Request request) {
-  //    data.modify();
-  //    Response response;
-  //
-  //    CacheControl cc = new CacheControl();
-  //    cc.setMaxAge(30);
-  //
-  //    response = Response.ok(data.toString(), "text/html")
-  //        .tag(data.getETag())
-  //        .cacheControl(cc)
-  //        .lastModified(data.getLastModifiedDate())
-  //        .build();
-  //    return response;
-  //  }
-  //
-  //  @GET
-  //  @Path("lmd")
-  //  public Response getLastModified(@Context Request request) {
-  //    System.out.println("RestResource:IF_MODIFIED_SINCE:          " + httpHeaders.getHeaderString(HttpHeaders.IF_MODIFIED_SINCE));
-  //    ResponseBuilder rb = request.evaluatePreconditions(data.getLastModifiedDate());
-  //
-  ////    System.out.println("RestResource:getLastModified data:       " + data.getLastModifiedDate());
-  //    System.out.println("RestResource:getLastModified data (GMD): " + data.getLastModifiedDateToGmdString());
-  //
-  //    Response response;
-  //    CacheControl cc = new CacheControl();
-  //    cc.setMaxAge(30);
-  //
-  //    if (rb != null) {
-  //      response = rb.cacheControl(cc).build();
-  //    } else {
-  //      response = Response.ok(data.toString(), "text/html")
-  //          .tag(data.getETag())
-  //          .cacheControl(cc)
-  //          .lastModified(data.getLastModifiedDate())
-  //          .build();
-  //    }
-  //    System.out.println("RestResource:getLastModified response:   " + response.getHeaderString(HttpHeaders.LAST_MODIFIED));
-  //    return response;
-  //  }
-  //
-  //  @POST
-  //  @Path("lmd")
-  //  public Response postLastModified(@Context Request request) {
-  //    data.modify();
-  //    Response response;
-  //
-  //    CacheControl cc = new CacheControl();
-  //    cc.setMaxAge(30);
-  //
-  //    response = Response.ok(data.toString(), "text/html")
-  //        .tag(data.getETag())
-  //        .cacheControl(cc)
-  //        .lastModified(data.getLastModifiedDate())
-  //        .build();
-  //    return response;
-  //  }
+  @PUT
+  @Path("put")
+  @Produces("text/html")
+  public Response put(@Context Request request) {
+    ResponseBuilder builder = evaluatePreconditions(request);
+    Response response;
+
+    if (builder == null) {
+      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+    } else {
+      response = builder.build();
+    }
+
+    return response;
+  }
+
+  @PATCH
+  @Path("patch")
+  @Produces("text/html")
+  public Response patch(@Context Request request) {
+    ResponseBuilder builder = evaluatePreconditions(request);
+    Response response;
+
+    if (builder == null) {
+      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+    } else {
+      response = builder.build();
+    }
+
+    return response;
+  }
+
+  ResponseBuilder evaluatePreconditions(Request request) {
+    ResponseBuilder responseBuilder = null;
+
+    responseBuilder = request.evaluatePreconditions();
+
+    if (responseBuilder == null) {
+      boolean cond = httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
+          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
+          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
+          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null;
+      if (cond) {
+        responseBuilder = Response.status(428).entity("precondition required");
+      }
+    }
+
+    return responseBuilder;
+  }
 }
