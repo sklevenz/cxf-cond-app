@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -17,6 +18,7 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.olingo.odata2.core.rest.PATCH;
 
@@ -26,8 +28,12 @@ public class RestResource {
   @Context
   HttpHeaders httpHeaders;
 
-  public static final String ETAG = "W/\"123abc\"";
-  private EntityTag eTag = new EntityTag(ETAG);
+  public static final String STRONG_ETAG = "123abc";
+  public static final String WEAK_ETAG = "W/\"123abc\"";
+  public static final String STRONG_NONMATCH_ETAG = "xyz";
+  public static final String WEAK_NONEMATCH_ETAG = "W/\"xyz\"";
+  private EntityTag strongETag = new EntityTag(STRONG_ETAG);
+  private EntityTag weakETag = new EntityTag(WEAK_ETAG);
   public static final String LAST_MODIFIED_DATE = "Sat, 29 Oct 1994 10:00:00 GMT";
   private Date lastModifiedDate;
 
@@ -43,8 +49,24 @@ public class RestResource {
   @GET
   @Path("get")
   @Produces("text/html")
-  public Response fetch() {
-    return Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+  public Response get(@Context Request request) {
+    ResponseBuilder builder = evaluatePreconditions(request);
+    Response response;
+
+    if (builder == null) {
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
+    } else {
+      response = builder.build();
+    }
+
+    return response;
+  }
+
+  @POST
+  @Path("post")
+  @Produces("text/html")
+  public Response post(@Context Request request) {
+    return Response.status(Status.CREATED).entity("created").lastModified(lastModifiedDate).tag(strongETag).build();
   }
 
   @DELETE
@@ -55,7 +77,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+      response = Response.status(Status.NO_CONTENT).lastModified(lastModifiedDate).tag(strongETag).build();
     } else {
       response = builder.build();
     }
@@ -71,7 +93,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
     } else {
       response = builder.build();
     }
@@ -87,7 +109,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok("ok").entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
     } else {
       response = builder.build();
     }
@@ -98,9 +120,11 @@ public class RestResource {
   ResponseBuilder evaluatePreconditions(Request request) {
     ResponseBuilder responseBuilder = null;
 
-    responseBuilder = request.evaluatePreconditions();
+    responseBuilder = request.evaluatePreconditions(strongETag);
 
-    if (responseBuilder == null) {
+    if (responseBuilder == null &&
+        request.getMethod().equalsIgnoreCase("put") || request.getMethod().equalsIgnoreCase("patch")
+        || request.getMethod().equalsIgnoreCase("delete")) {
       boolean cond = httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
           httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
           httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&

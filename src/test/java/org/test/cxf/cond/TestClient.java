@@ -1,17 +1,20 @@
 package org.test.cxf.cond;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
+import java.util.HashMap;
 
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -19,7 +22,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.test.cxf.cond.rest.RestResource;
 
@@ -47,43 +49,92 @@ public class TestClient {
   public static void afterClass() {}
 
   @Test
-  public void fetch200() throws Exception {
-    HttpResponse response = execute(HttpMethodEnum.GET, "/get", null, null);
+  public void get_200() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.GET, "/get", null);
 
     assertNotNull(response);
-    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals(Status.OK.getStatusCode(), response.getStatusLine().getStatusCode());
     assertNotNull(response.getFirstHeader(HttpHeaders.LAST_MODIFIED));
     assertNotNull(response.getFirstHeader(HttpHeaders.ETAG));
     String lastModifiedDateHeader = response.getFirstHeader(HttpHeaders.LAST_MODIFIED).getValue();
     String eTagHeader = response.getFirstHeader(HttpHeaders.ETAG).getValue();
 
-    assertEquals(200, response.getStatusLine().getStatusCode());
+    assertEquals(Status.OK.getStatusCode(), response.getStatusLine().getStatusCode());
     assertEquals(RestResource.LAST_MODIFIED_DATE, lastModifiedDateHeader);
-    assertEquals("\"" + RestResource.ETAG + "\"", eTagHeader);
+    assertEquals("\"" + RestResource.STRONG_ETAG + "\"", eTagHeader);
   }
 
   @Test
-  public void put428() throws Exception {
-    HttpResponse response = execute(HttpMethodEnum.PUT, "/put", null, null);
+  public void post_201() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.POST, "/post", null);
+    assertNotNull(response);
+    assertEquals(Status.CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void put_428() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.PUT, "/put", null);
     assertNotNull(response);
     assertEquals(428, response.getStatusLine().getStatusCode());
   }
 
   @Test
-  public void patch428() throws Exception {
-    HttpResponse response = execute(HttpMethodEnum.PATCH, "/patch", null, null);
+  public void patch_428() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.PATCH, "/patch", null);
     assertNotNull(response);
     assertEquals(428, response.getStatusLine().getStatusCode());
   }
 
   @Test
-  public void delete428() throws Exception {
-    HttpResponse response = execute(HttpMethodEnum.DELETE, "/delete", null, null);
+  public void delete_428() throws Exception {
+    HttpResponse response = execute(HttpMethodEnum.DELETE, "/delete", null);
     assertNotNull(response);
     assertEquals(428, response.getStatusLine().getStatusCode());
   }
 
-  private HttpResponse execute(HttpMethodEnum method, String path, String eTagHeaderValue, String lastModifiedDateHeaderValue) {
+  @Test
+  public void put_IF_MATCH_STRONG_200() throws Exception {
+    HashMap<String, String> headers = new HashMap<String, String>();   
+    headers.put(HttpHeaders.IF_MATCH, "123abc");
+    
+    HttpResponse response = execute(HttpMethodEnum.PUT, "/put", headers);
+    assertNotNull(response);
+    assertEquals(Status.OK.getStatusCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void put_IF_MATCH_STRONG_412() throws Exception {
+    HashMap<String, String> headers = new HashMap<String, String>();   
+    headers.put(HttpHeaders.IF_MATCH, "doesnotmatch");
+    
+    HttpResponse response = execute(HttpMethodEnum.PUT, "/put", headers);
+    assertNotNull(response);
+    assertEquals(Status.PRECONDITION_FAILED.getStatusCode(), response.getStatusLine().getStatusCode());
+  }
+  
+  @Test
+  public void get_IF_MATCH_STRONG_200() throws Exception {
+    HashMap<String, String> headers = new HashMap<String, String>();   
+    headers.put(HttpHeaders.IF_MATCH, "123abc");
+    
+    HttpResponse response = execute(HttpMethodEnum.GET, "/get", headers);
+    assertNotNull(response);
+    assertEquals(Status.OK.getStatusCode(), response.getStatusLine().getStatusCode());
+  }
+
+  @Test
+  public void get_IF_MATCH_STRONG_412() throws Exception {
+    HashMap<String, String> headers = new HashMap<String, String>();   
+    headers.put(HttpHeaders.IF_MATCH, "doesnotmatch");
+    
+    HttpResponse response = execute(HttpMethodEnum.GET, "/get", headers);
+    assertNotNull(response);
+    assertEquals(Status.PRECONDITION_FAILED.getStatusCode(), response.getStatusLine().getStatusCode());
+  }
+
+
+  
+  private HttpResponse execute(HttpMethodEnum method, String path, HashMap<String, String> headers) {
     try {
       URI uri = URI.create(server.getEndpoint() + path);
       HttpResponse response;
@@ -94,6 +145,9 @@ public class TestClient {
         break;
       case PUT:
         hrb = new HttpPut(uri);
+        break;
+      case POST:
+        hrb = new HttpPost(uri);
         break;
       case PATCH:
         hrb = new HttpPatch(uri);
@@ -108,12 +162,9 @@ public class TestClient {
         throw new RuntimeException("Method unsupported: " + method);
       }
 
-      if (null != eTagHeaderValue) {
-        hrb.setHeader(HttpHeaders.ETAG, eTagHeaderValue);
-      }
-
-      if (null != lastModifiedDateHeaderValue) {
-        hrb.setHeader(HttpHeaders.LAST_MODIFIED, lastModifiedDateHeaderValue);
+      if (null != headers) {
+        for (String header : headers.keySet())
+        hrb.setHeader(header, headers.get(header));
       }
 
       response = client.execute(hrb);
