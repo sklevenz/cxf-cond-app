@@ -32,9 +32,17 @@ public class RestResource {
   public static final String WEAK_ETAG = "W/\"123abc\"";
   public static final String STRONG_NONMATCH_ETAG = "xyz";
   public static final String WEAK_NONEMATCH_ETAG = "W/\"xyz\"";
-  private EntityTag strongETag = new EntityTag(STRONG_ETAG);
-  private EntityTag weakETag = new EntityTag(WEAK_ETAG);
+  private static EntityTag strongETag = new EntityTag(STRONG_ETAG);
+  private static EntityTag weakETag = new EntityTag(WEAK_ETAG);
+
+  private static EntityTag eTag = strongETag;
+
+  public static void setETag(EntityTag eTag) {
+    RestResource.eTag = eTag;
+  }
+
   public static final String LAST_MODIFIED_DATE = "Sat, 29 Oct 1994 10:00:00 GMT";
+
   private Date lastModifiedDate;
 
   {
