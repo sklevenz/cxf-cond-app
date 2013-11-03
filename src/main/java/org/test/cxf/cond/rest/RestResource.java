@@ -28,14 +28,7 @@ public class RestResource {
   @Context
   HttpHeaders httpHeaders;
 
-  public static final String STRONG_ETAG = "123abc";
-  public static final String WEAK_ETAG = "W/\"123abc\"";
-  public static final String STRONG_NONMATCH_ETAG = "xyz";
-  public static final String WEAK_NONEMATCH_ETAG = "W/\"xyz\"";
-  private static EntityTag strongETag = new EntityTag(STRONG_ETAG);
-  private static EntityTag weakETag = new EntityTag(WEAK_ETAG);
-
-  private static EntityTag eTag = strongETag;
+  private static EntityTag eTag = null;
 
   public static void setETag(EntityTag eTag) {
     RestResource.eTag = eTag;
@@ -62,7 +55,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
     } else {
       response = builder.build();
     }
@@ -74,7 +67,7 @@ public class RestResource {
   @Path("post")
   @Produces("text/html")
   public Response post(@Context Request request) {
-    return Response.status(Status.CREATED).entity("created").lastModified(lastModifiedDate).tag(strongETag).build();
+    return Response.status(Status.CREATED).entity("created").lastModified(lastModifiedDate).tag(eTag).build();
   }
 
   @DELETE
@@ -85,7 +78,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.status(Status.NO_CONTENT).lastModified(lastModifiedDate).tag(strongETag).build();
+      response = Response.status(Status.NO_CONTENT).lastModified(lastModifiedDate).tag(eTag).build();
     } else {
       response = builder.build();
     }
@@ -101,7 +94,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
     } else {
       response = builder.build();
     }
@@ -117,7 +110,7 @@ public class RestResource {
     Response response;
 
     if (builder == null) {
-      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(strongETag).build();
+      response = Response.ok().entity("ok").lastModified(lastModifiedDate).tag(eTag).build();
     } else {
       response = builder.build();
     }
@@ -128,7 +121,7 @@ public class RestResource {
   ResponseBuilder evaluatePreconditions(Request request) {
     ResponseBuilder responseBuilder = null;
 
-    responseBuilder = request.evaluatePreconditions(strongETag);
+    responseBuilder = request.evaluatePreconditions(eTag);
 
     if (responseBuilder == null &&
         request.getMethod().equalsIgnoreCase("put") || request.getMethod().equalsIgnoreCase("patch")

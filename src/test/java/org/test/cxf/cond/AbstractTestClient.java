@@ -1,11 +1,11 @@
 package org.test.cxf.cond;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
 import java.util.HashMap;
 
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 
@@ -25,7 +25,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.test.cxf.cond.rest.RestResource;
 
-public class TestClient {
+public abstract class AbstractTestClient {
 
   private HttpClient client;
   private TestServer server;
@@ -48,6 +48,10 @@ public class TestClient {
   @AfterClass
   public static void afterClass() {}
 
+  protected abstract EntityTag eTagMatch( );
+  protected abstract String eTagMatchString( );
+  protected abstract String eTagNoMatchString( );
+  
   @Test
   public void get_200() throws Exception {
     HttpResponse response = execute(HttpMethodEnum.GET, "/get", null);
@@ -61,7 +65,7 @@ public class TestClient {
 
     assertEquals(Status.OK.getStatusCode(), response.getStatusLine().getStatusCode());
     assertEquals(RestResource.LAST_MODIFIED_DATE, lastModifiedDateHeader);
-    assertEquals("\"" + RestResource.STRONG_ETAG + "\"", eTagHeader);
+    assertEquals("\"" + eTagMatchString() + "\"", eTagHeader);
   }
 
   @Test
@@ -93,9 +97,9 @@ public class TestClient {
   }
 
   @Test
-  public void put_IF_MATCH_STRONG_200() throws Exception {
+  public void put_IF_MATCH_200() throws Exception {
     HashMap<String, String> headers = new HashMap<String, String>();   
-    headers.put(HttpHeaders.IF_MATCH, "123abc");
+    headers.put(HttpHeaders.IF_MATCH, eTagMatchString());
     
     HttpResponse response = execute(HttpMethodEnum.PUT, "/put", headers);
     assertNotNull(response);
@@ -103,9 +107,9 @@ public class TestClient {
   }
 
   @Test
-  public void put_IF_MATCH_STRONG_412() throws Exception {
+  public void put_IF_MATCH_412() throws Exception {
     HashMap<String, String> headers = new HashMap<String, String>();   
-    headers.put(HttpHeaders.IF_MATCH, "doesnotmatch");
+    headers.put(HttpHeaders.IF_MATCH, eTagNoMatchString());
     
     HttpResponse response = execute(HttpMethodEnum.PUT, "/put", headers);
     assertNotNull(response);
@@ -113,9 +117,9 @@ public class TestClient {
   }
   
   @Test
-  public void get_IF_MATCH_STRONG_200() throws Exception {
+  public void get_IF_MATCH_200() throws Exception {
     HashMap<String, String> headers = new HashMap<String, String>();   
-    headers.put(HttpHeaders.IF_MATCH, "123abc");
+    headers.put(HttpHeaders.IF_MATCH, eTagMatchString());
     
     HttpResponse response = execute(HttpMethodEnum.GET, "/get", headers);
     assertNotNull(response);
@@ -123,9 +127,9 @@ public class TestClient {
   }
 
   @Test
-  public void get_IF_MATCH_STRONG_412() throws Exception {
+  public void get_IF_MATCH_412() throws Exception {
     HashMap<String, String> headers = new HashMap<String, String>();   
-    headers.put(HttpHeaders.IF_MATCH, "doesnotmatch");
+    headers.put(HttpHeaders.IF_MATCH, eTagNoMatchString());
     
     HttpResponse response = execute(HttpMethodEnum.GET, "/get", headers);
     assertNotNull(response);
