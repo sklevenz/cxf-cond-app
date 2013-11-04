@@ -29,22 +29,14 @@ public class RestResource {
   HttpHeaders httpHeaders;
 
   private static EntityTag eTag = null;
+  private static Date lastModifiedDate;
 
   public static void setETag(EntityTag eTag) {
     RestResource.eTag = eTag;
   }
 
-  public static final String LAST_MODIFIED_DATE = "Sat, 29 Oct 1994 10:00:00 GMT";
-
-  private Date lastModifiedDate;
-
-  {
-    try {
-      DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
-      lastModifiedDate = df.parse(LAST_MODIFIED_DATE);
-    } catch (ParseException e) {
-      e.printStackTrace(System.err);
-    }
+  public static void setLastModifiedDate(Date lmd) {
+    RestResource.lastModifiedDate = lmd;
   }
 
   @GET
@@ -121,15 +113,21 @@ public class RestResource {
   ResponseBuilder evaluatePreconditions(Request request) {
     ResponseBuilder responseBuilder = null;
 
-    responseBuilder = request.evaluatePreconditions(eTag);
+    if (eTag != null && lastModifiedDate != null) {
+      responseBuilder = request.evaluatePreconditions(lastModifiedDate, eTag);
+    } else if (eTag != null) {
+      responseBuilder = request.evaluatePreconditions(eTag);
+    } else if (lastModifiedDate != null) {
+      responseBuilder = request.evaluatePreconditions(lastModifiedDate);
+    }
 
     if (responseBuilder == null &&
         request.getMethod().equalsIgnoreCase("put") || request.getMethod().equalsIgnoreCase("patch")
         || request.getMethod().equalsIgnoreCase("delete")) {
       boolean cond = httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
-          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
-          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null &&
-          httpHeaders.getHeaderString(HttpHeaders.IF_MATCH) == null;
+          httpHeaders.getHeaderString(HttpHeaders.IF_NONE_MATCH) == null &&
+          httpHeaders.getHeaderString(HttpHeaders.IF_MODIFIED_SINCE) == null &&
+          httpHeaders.getHeaderString(HttpHeaders.IF_UNMODIFIED_SINCE) == null;
       if (cond) {
         responseBuilder = Response.status(428).entity("precondition required");
       }
