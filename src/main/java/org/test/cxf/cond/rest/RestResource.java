@@ -1,10 +1,6 @@
 package org.test.cxf.cond.rest;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Locale;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -59,7 +55,16 @@ public class RestResource {
   @Path("post")
   @Produces("text/html")
   public Response post(@Context Request request) {
-    return Response.status(Status.CREATED).entity("created").lastModified(lastModifiedDate).tag(eTag).build();
+    ResponseBuilder builder = evaluatePreconditions(request);
+    Response response;
+
+    if (builder == null) {
+      response =  Response.status(Status.CREATED).entity("created").lastModified(lastModifiedDate).tag(eTag).build();
+    } else {
+      response = builder.build();
+    }
+
+    return response;
   }
 
   @DELETE

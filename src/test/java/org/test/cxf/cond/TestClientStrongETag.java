@@ -5,7 +5,7 @@ import javax.ws.rs.core.EntityTag;
 import org.junit.Before;
 import org.test.cxf.cond.rest.RestResource;
 
-public class TestClientStrongETag extends AbstractTestClient {
+public class TestClientStrongETag extends AbstractGenericTests {
 
   private static final String STRONG_ETAG = "123abc";
   private static final String STRONG_NONMATCH_ETAG = "nomatch";

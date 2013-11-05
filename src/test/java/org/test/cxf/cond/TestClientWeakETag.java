@@ -5,7 +5,7 @@ import javax.ws.rs.core.EntityTag;
 import org.junit.Before;
 import org.test.cxf.cond.rest.RestResource;
 
-public class TestClientWeakETag extends AbstractTestClient {
+public class TestClientWeakETag extends AbstractGenericTests {
  
   private static final String WEAK_ETAG = "W/\"123abc\"";
   private static final String WEAK_NONEMATCH_ETAG = "W/\"nomatch\"";

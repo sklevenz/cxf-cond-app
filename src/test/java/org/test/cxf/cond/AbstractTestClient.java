@@ -1,6 +1,5 @@
 package org.test.cxf.cond;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.net.URI;
@@ -10,7 +9,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.http.HttpResponse;
@@ -26,8 +24,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.test.cxf.cond.rest.RestResource;
 
 public abstract class AbstractTestClient {
@@ -35,10 +31,11 @@ public abstract class AbstractTestClient {
   private HttpClient client;
   private TestServer server;
 
-  private static final String LAST_MODIFIED_DATE_MATCH = "Sat, 29 Oct 1994 10:00:00 GMT";
-  private static final String LAST_MODIFIED_DATE_NO_MATCH = "Sat, 29 Oct 1994 09:00:00 GMT";
+  protected static final String LAST_MODIFIED_DATE_MATCH = "Sat, 29 Oct 1994 10:00:00 GMT";
+  protected static final String LAST_MODIFIED_DATE_NO_MATCH = "Sat, 29 Oct 1994 09:00:00 GMT";
 
-  private static final String FORMAT_STRING = "| %-6S | %-14s | %-12s | %-20s | %-32s | %6s | %8s | %1s%1s |";
+  //                                                meth.  etagh   etagv   lmdh    lmdv    act   str   el 
+  private static final String FORMAT_STRING = "|  | %-6S | %-14s | %-12s | %-20s | %-32s | %6s | %8s | %1s%1s |";
 
   @Before
   public void before() throws Exception {
@@ -58,7 +55,7 @@ public abstract class AbstractTestClient {
 
   @BeforeClass
   public static void beforeClass() {
-    System.out.println(String.format(FORMAT_STRING, "Method", "eTag Header", "eTag Value", "LMD Header", "LMD Value", "Status", "Expected", "E", "L"));
+    System.out.println(String.format(FORMAT_STRING, "Method", "eTag Header", "eTag Value", "LMD Header", "LMD Value", "Actual Status", "Strong Status", "E", "L"));
     System.out.println("-----------------------------------------------------------------------------------------------------------------------------");
   }
 
@@ -69,195 +66,11 @@ public abstract class AbstractTestClient {
 
   protected abstract String eTagNoMatchString();
 
-  @Test
-  public void testPost_eTag() {
-    RestResource.setLastModifiedDate(null);
-
-    test(HttpMethodEnum.POST, null, null, null, null, Status.CREATED);
-
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagNoMatchString(), null, null, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagMatchString(), null, null, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), null, null, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), null, null, Status.CREATED);
-  }
-
-  @Test
-  public void testPost_lastModifiedDate_eTag() {
-    RestResource.setETag(null);
-
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.CREATED);
-  }
-
-  @Test
-  public void testPost_lastModifiedDate() {
-    test(HttpMethodEnum.POST, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.CREATED);
-    test(HttpMethodEnum.POST, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.CREATED);
-  }
-
-  @Test
-  public void testPut_eTag() {
-    RestResource.setLastModifiedDate(null);
-
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagNoMatchString(), null, null, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), null, null, Status.PRECONDITION_FAILED);
-  }
-
-  @Test
-  public void testPut_lastModifiedDate() {
-    RestResource.setETag(null);
-
-    test(HttpMethodEnum.PUT, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PUT, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PUT, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-  }
-
-  @Test
-  public void testPut_lastModifiedDate_eTag() {
-
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PUT, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-  }
-
-  @Test
-  public void test_428() {
-    test(HttpMethodEnum.PATCH, null, null, null, null, 428);
-    test(HttpMethodEnum.PUT, null, null, null, null, 428);
-    test(HttpMethodEnum.DELETE, null, null, null, null, 428);
-  }
-
-  @Test
-  @Ignore
-  public void testPatch_eTag() {
-    RestResource.setLastModifiedDate(null);
-
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagNoMatchString(), null, null, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), null, null, Status.PRECONDITION_FAILED);
-  }
-
-  @Test
-  @Ignore
-  public void testPatch_lastModifiedDate() {
-    RestResource.setETag(null);
-
-    test(HttpMethodEnum.PATCH, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PATCH, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PATCH, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-  }
-
-  @Test
-  @Ignore
-  public void testPatch_lastModifiedDate_eTag() {
-
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.OK);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.PATCH, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.OK);
-  }
-
-  @Test
-  public void testDelete_eTag() {
-    RestResource.setLastModifiedDate(null);
-
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagNoMatchString(), null, null, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagMatchString(), null, null, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), null, null, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), null, null, Status.PRECONDITION_FAILED);
-  }
-
-  @Test
-  public void testDelete_lastModifiedDate() {
-    RestResource.setETag(null);
-
-    test(HttpMethodEnum.DELETE, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, null, null, HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.DELETE, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.DELETE, null, null, HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-  }
-
-  @Test
-  public void testDelete_lastModifiedDate_eTag() {
-
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.NO_CONTENT);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_MODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NOT_MODIFIED);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_NO_MATCH, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.DELETE, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), HttpHeaders.IF_UNMODIFIED_SINCE, LAST_MODIFIED_DATE_MATCH, Status.NO_CONTENT);
-  }
-
-  @Test
-  public void testGet() {
-    RestResource.setLastModifiedDate(null);
-
-    test(HttpMethodEnum.GET, null, null, null, null, Status.OK);
-
-    test(HttpMethodEnum.GET, HttpHeaders.IF_MATCH, eTagNoMatchString(), null, null, Status.PRECONDITION_FAILED);
-    test(HttpMethodEnum.GET, HttpHeaders.IF_MATCH, eTagMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.GET, HttpHeaders.IF_NONE_MATCH, eTagNoMatchString(), null, null, Status.OK);
-    test(HttpMethodEnum.GET, HttpHeaders.IF_NONE_MATCH, eTagMatchString(), null, null, Status.NOT_MODIFIED);
-  }
-
-  private void test(HttpMethodEnum method, String eTagHeader, String eTagHeaderValue, String lmdHeader, String lmdHeaderValue, Status status) {
+  protected void test(HttpMethodEnum method, String eTagHeader, String eTagHeaderValue, String lmdHeader, String lmdHeaderValue, Status status) {
     test(method, eTagHeader, eTagHeaderValue, lmdHeader, lmdHeaderValue, status.getStatusCode());
   }
 
-  private void test(HttpMethodEnum method, String eTagHeader, String eTagHeaderValue, String lmdHeader, String lmdHeaderValue, int status) {
+  protected void test(HttpMethodEnum method, String eTagHeader, String eTagHeaderValue, String lmdHeader, String lmdHeaderValue, int status) {
     HashMap<String, String> headers = new HashMap<String, String>();
     String eTagHeaderLabel = "x";
     String eTagHeaderValueLabel = "x";
@@ -289,7 +102,7 @@ public abstract class AbstractTestClient {
       expected = Integer.toString(status);
     }
     System.out.println(String.format(FORMAT_STRING, method.toString(), eTagHeaderLabel, eTagHeaderValueLabel, lmdHeaderLabel, lmdHeaderValueLabel, response.getStatusLine().getStatusCode(), expected, eTagMatch, lmdMatch));
-//    assertEquals(status, response.getStatusLine().getStatusCode());
+    //    assertEquals(status, response.getStatusLine().getStatusCode());
   }
 
   private HttpResponse execute(HttpMethodEnum method, String path, HashMap<String, String> headers) {
